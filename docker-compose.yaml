@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  api:
+    image: scrot/hot-reload-go:1.20.2
+    ports:
+        - "80:80"
+    expose:
+        - "80"
+    volumes:
+        # mount the project into the docker container. Must use go modules.
+        - .:/app
+        # mount modules directory from source code or as docker volume to
+        # cache go modules
+        - ./_modules:/go/pkg/mod
+    environment:
+        # directory to look for the main go entry point (default: /app)
+        - DIRECTORY=/app/cmd/web
+        # specify the command that should be run, can be 'build' or 'test'
+        # 'build' is the default command 
+        - CMD=build
+        # arguments can be used to specify arguments to pass to the executable
+        # on running
+        # - ARGS=-test=someString
+        # ignore will indicate which files and subdirectories to ignore from 
+        # watching, note that the path will be matched from the src directory
+        # - IGNORE=/cmd/web,*.md
+        - ADDR=:80

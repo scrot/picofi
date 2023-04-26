@@ -1,8 +1,8 @@
 version: '3'
 
 tasks:
-  server:
+  web:
     env:
       ADDR: 127.0.0.1:8080
     cmds:
-      - go run ./cmd/server
+      - go run ./cmd/web

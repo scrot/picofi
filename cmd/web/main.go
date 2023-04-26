@@ -13,14 +13,23 @@ import (
 )
 
 var (
-	addr = os.Getenv("ADDR")
+  addr = "127.0.0.1:8080"
 )
 
 func main() {
 	logger := slog.New(tint.NewHandler(os.Stdout))
 
+  if val, ok := os.LookupEnv("ADDR"); ok {
+    addr = val
+  }
+
+	router := Router{
+		Logger: logger,
+	}
+
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", handleIndex)
+	mux.Handle("/static/", router.handleStatic())
+	mux.HandleFunc("/", router.handleRoot)
 
 	server := http.Server{
 		Addr:    addr,
@@ -58,8 +67,4 @@ func gracefulShutdown(server *http.Server, logger *slog.Logger, closed chan any)
 	}
 
 	close(closed)
-}
-
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("hello"))
 }

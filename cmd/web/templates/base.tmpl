@@ -1,0 +1,32 @@
+{{define "base"}}
+<!doctype html>
+<html lang='en'>
+    <head>
+        <meta charset='utf-8'>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="/static/base.css">
+        <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+        <link href="https://fonts.cdnfonts.com/css/neue-haas-grotesk-display-pro" rel="stylesheet">
+        <title>PicoFI - {{template "title" .}}</title>
+        <meta name="description" content="Minimalistic and low-resource financial independence and early retirement calculator">
+        <meta name="author" content="rdewildt">
+    </head>
+    <body>
+        {{template "nav" .}}
+        <header>
+            <h1>PicoFI</h1>
+        </header>
+        <main>
+            {{template "main" .}}
+        </main>
+        <footer>
+            <p>Powered by <a href='http://golang.org'>Go</a></p>
+            <p>Created by Roy de Wildt</p>
+        </footer>
+    </body>
+</html>
+{{end}}
+
+{{define "nav"}}
+<nav></nav>
+{{end}}
