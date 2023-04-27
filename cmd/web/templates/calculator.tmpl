@@ -1,10 +1,17 @@
 {{define "title"}}Calculator{{end}}
 
 {{define "main"}}
-<h1>I'm the calculator</h1>
-<form method="POST">
-  <label>Yearly income</label>
-  <input type="text" name="income" placeholder="default here"/>
-  <input type="submit" value="Calculate" />
-</form>
+<h1>Hey, I'm a calculator</h1>
+<section class="variables">
+  <form method="POST">
+    <label>Yearly Income</label>
+    <input type="text" name="income" placeholder={{.AnnualIncome}} />
+    <label>Yearly Expenses</label>
+    <input type="text" name="income" placeholder={{.AnnualExpenses}} />
+    <button class="submit" type="submit">Calculate</button>
+  </form>
+</section>
+<section class="results">
+  <p>Annual Saverate: {{annualSaveRate .AnnualIncome .AnnualExpenses}}</p>
+</section>
 {{end}}

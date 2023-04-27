@@ -8,24 +8,27 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/Rhymond/go-money"
 	"github.com/lmittmann/tint"
+	"github.com/scrot/picofi"
 	"golang.org/x/exp/slog"
 )
 
 var (
-  addr = "127.0.0.1:8080"
+	addr = "127.0.0.1:8080"
 )
 
 func main() {
+	if val, ok := os.LookupEnv("ADDR"); ok {
+		addr = val
+	}
+
 	logger := slog.New(tint.NewHandler(os.Stdout))
 
-  if val, ok := os.LookupEnv("ADDR"); ok {
-    addr = val
-  }
+	money.AddCurrency("EURA", "\u20ac", "$1", ",", ".", 2)
+	calculator := picofi.NewCalculator(logger, *money.GetCurrency("EURA"))
 
-	router := Router{
-		Logger: logger,
-	}
+	router := NewServer(logger, calculator)
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", router.handleStatic())
