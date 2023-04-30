@@ -25,7 +25,7 @@ func main() {
 
 	logger := slog.New(tint.NewHandler(os.Stdout))
 
-	money.AddCurrency("EURA", "\u20ac", "$1", ",", ".", 2)
+	money.AddCurrency("EURA", "\u20ac", "$1", ",", ".", 0)
 	calculator := picofi.NewCalculator(logger, *money.GetCurrency("EURA"))
 
 	router := NewServer(logger, calculator)
