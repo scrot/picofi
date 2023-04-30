@@ -32,7 +32,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", router.handleStatic())
-	mux.HandleFunc("/", router.handleRoot)
+	mux.HandleFunc("/", router.handleCalculator)
 
 	server := http.Server{
 		Addr:    addr,
@@ -42,14 +42,14 @@ func main() {
 	idleConnClosed := make(chan any)
 	go gracefulShutdown(&server, logger, idleConnClosed)
 
-	logger.Info("server is listening", "addr", addr)
+	logger.Info("main: server is listening", "addr", addr)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Error("server unexpectedly quit", "err", err)
+		logger.Error("main: server unexpectedly quit", "err", err)
 		os.Exit(1)
 	}
 
 	<-idleConnClosed
-	logger.Info("server terminated succesfully")
+	logger.Info("main: server terminated succesfully")
 }
 
 // gracefulShutdown shutsdown the server after receiving a interrupt signal
@@ -63,9 +63,9 @@ func gracefulShutdown(server *http.Server, logger *slog.Logger, closed chan any)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	logger.Info("gracefully closing idle connections")
+	logger.Info("gracefulShutdown: gracefully closing idle connections")
 	if err := server.Shutdown(ctx); err != nil {
-		logger.Error("failed to close idle connections", "err", err)
+		logger.Error("gracefulShutdown: failed to close idle connections", "err", err)
 		os.Exit(1)
 	}
 
