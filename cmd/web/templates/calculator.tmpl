@@ -12,6 +12,7 @@
   </form>
 </section>
 <section class="results">
-  <p>Annual Saverate: {{annualSaveRate .AnnualIncome .AnnualExpenses}}</p>
+  <p>Absolute Saved Annually: {{annualSaveRate .AnnualIncome .AnnualExpenses}}</p>
+  <p>Percentage Saved Annually: {{annualSaveRatePercentage .AnnualIncome .AnnualExpenses}}</p>
 </section>
 {{end}}

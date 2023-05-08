@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Rhymond/go-money"
 	"github.com/scrot/picofi"
 	"github.com/scrot/picofi/cmd/web/templates"
 	"golang.org/x/exp/slog"
@@ -20,22 +19,11 @@ type Server struct {
 }
 
 func NewServer(logger *slog.Logger, calculator picofi.Calculator) Server {
-	fs := template.FuncMap{
-		"annualSaveRate": func(income, expenses float64) string {
-			res := calculator.AnnualSaveRate(
-				money.NewFromFloat(income, calculator.Currency),
-				money.NewFromFloat(expenses, calculator.Currency),
-			)
-			return res.Display()
-		},
-	}
-
 	server := Server{
 		logger:     logger,
 		tcache:     make(TemplateCache),
-		tfunctions: fs,
+		tfunctions: NewTF(&calculator).FuncMap(),
 	}
-
 	return server
 }
 
