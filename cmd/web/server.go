@@ -2,11 +2,14 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"html/template"
 	"net/http"
-	"strconv"
+	"os"
+	"time"
 
+	"github.com/allegro/bigcache/v3"
 	"github.com/scrot/picofi"
 	"github.com/scrot/picofi/cmd/web/templates"
 	"golang.org/x/exp/slog"
@@ -14,13 +17,21 @@ import (
 
 type Server struct {
 	logger     *slog.Logger
+	sessions   *bigcache.BigCache
 	tcache     TemplateCache
 	tfunctions template.FuncMap
 }
 
 func NewServer(logger *slog.Logger, calculator picofi.Calculator) Server {
+	c, err := bigcache.New(context.Background(), bigcache.DefaultConfig(time.Hour*24))
+	if err != nil {
+		logger.Error("unable to create cache", "err", err)
+		os.Exit(1)
+	}
+
 	server := Server{
 		logger:     logger,
+		sessions:   c,
 		tcache:     make(TemplateCache),
 		tfunctions: NewTF(&calculator).FuncMap(),
 	}
@@ -29,66 +40,9 @@ func NewServer(logger *slog.Logger, calculator picofi.Calculator) Server {
 
 type TemplateCache = map[string]*template.Template
 
-type CalculatorInput struct {
-	AnnualIncome   float64
-	AnnualExpenses float64
-}
-
-// handleCalculator handles requests for interacting with the calculator
-func (s Server) handleCalculator(w http.ResponseWriter, r *http.Request) {
-	s.logger.Info("handleCalculator: new request", "method", r.Method, "uri", r.RequestURI, "params", r.URL.RawQuery)
-
-	switch r.Method {
-	case http.MethodGet:
-		s.newCalculator(w)
-	case http.MethodPost:
-		s.updateCalculator(w, r)
-	case http.MethodOptions:
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
-		w.WriteHeader(http.StatusNoContent)
-	default:
-		w.Header().Set("Allow", "GET, POST, OPTIONS")
-		s.writeError(w, fmt.Errorf("handleCalculator: no route for method"), http.StatusMethodNotAllowed)
-	}
-}
-
 // handleStatic serves static assets like .css and favicons
 func (s Server) handleStatic() http.Handler {
 	return http.StripPrefix("/static/", http.FileServer(http.FS(templates.Files)))
-}
-
-// newCalculator renders the calculator with the default values
-func (s Server) newCalculator(w http.ResponseWriter) {
-	data := CalculatorInput{
-		AnnualIncome:   70000,
-		AnnualExpenses: 50000,
-	}
-
-	s.writeTemplate(w, "calculator", data, false)
-}
-
-// updateCalculator re-renders the calculator with input provided in the form
-func (s Server) updateCalculator(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		s.writeError(w, fmt.Errorf("updateCalculator: parsing form data: %w", err), http.StatusBadRequest)
-	}
-
-	income, err := strconv.ParseFloat(r.Form.Get("income"), 64)
-	if err != nil {
-		s.writeError(w, fmt.Errorf("updateCalculator: converting form value (income): %w", err), http.StatusBadRequest)
-	}
-
-	expenses, err := strconv.ParseFloat(r.Form.Get("expenses"), 64)
-	if err != nil {
-		s.writeError(w, fmt.Errorf("updateCalculator: converting form value (expenses): %w", err), http.StatusBadRequest)
-	}
-
-	data := CalculatorInput{
-		AnnualIncome:   income,
-		AnnualExpenses: expenses,
-	}
-	s.writeTemplate(w, "calculator", data, true)
 }
 
 // writeTemplate renders and writes .tmpl files to w, exposing functions and data to the template
@@ -108,6 +62,7 @@ func (s Server) writeTemplate(w http.ResponseWriter, template string, data any, 
 		s.logger.Info(fmt.Sprintf("writeTemplate: new template %s cached", template))
 		if err != nil {
 			s.writeError(w, fmt.Errorf("writeTemplate: render template: %w", err), http.StatusInternalServerError)
+			return
 		}
 		s.tcache[template] = t
 	}
@@ -116,6 +71,7 @@ func (s Server) writeTemplate(w http.ResponseWriter, template string, data any, 
 	var buf bytes.Buffer
 	if err := s.tcache[template].ExecuteTemplate(&buf, "base", data); err != nil {
 		s.writeError(w, fmt.Errorf("writeTemplate: execute template: %w", err), http.StatusInternalServerError)
+		return
 	}
 
 	w.Write(buf.Bytes())
@@ -132,6 +88,7 @@ func (s Server) writeError(w http.ResponseWriter, err error, code int) {
 func renderTemplate(name string, funcs template.FuncMap) (*template.Template, error) {
 	files := []string{
 		"base.tmpl",
+		"nav.tmpl",
 		fmt.Sprintf("%s.tmpl", name),
 	}
 
@@ -141,4 +98,13 @@ func renderTemplate(name string, funcs template.FuncMap) (*template.Template, er
 	}
 
 	return t, nil
+}
+
+func (s Server) sessionFromCookie(r *http.Request) string {
+	v, err := r.Cookie(sessionCookieKey)
+	if err != nil {
+		s.logger.Info("no session-id found in cookie")
+	}
+
+	return v.Value
 }

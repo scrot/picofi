@@ -32,7 +32,11 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.Handle("/static/", router.handleStatic())
-	mux.HandleFunc("/", router.handleCalculator)
+
+	mux.HandleFunc("/", router.handleOverview)
+	mux.HandleFunc("/past", router.handlePast)
+	mux.Handle("/simulation", router.sessionMiddleware(http.HandlerFunc(router.handleSimulation)))
+	mux.HandleFunc("/simulation/savings", router.updateSavings)
 
 	server := http.Server{
 		Addr:    addr,

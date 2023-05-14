@@ -1,0 +1,47 @@
+{{define "title"}}Calculator{{end}}
+
+{{define "main"}}
+<section>
+<h1>How much are you saving?</h1>
+<p>Considering all that you earn in a year and all that you spend, how much is left of your hard work?</p>
+<div class="variables">
+  <form method="POST">
+    <label>Yearly Income</label>
+    <input type="text" name="income" value={{.AnnualIncome}} />
+    <label>Yearly Expenses</label>
+    <input type="text" name="expenses" value={{.AnnualExpenses}} />
+    <button class="submit" type="submit">Calculate</button>
+  </form>
+</div>
+<div class="results">
+  <p>Based on the input you provided, you are currently saving <b>{{annualSaveRate .AnnualIncome .AnnualExpenses}}</b> annually. That is <b>{{annualSaveRatePercentage .AnnualIncome .AnnualExpenses}}</b> of your total income. </p>
+</div>
+</section>
+<section>
+<h1>What do you have already?</h1>
+<p>All the money that you have tucked away the past years. How much is it and what are the returns that they are generating?</p>
+  <form method="POST">
+    <table>
+      <thead>
+        </tr>
+        <th>Money Store</th>
+        <th>Amount</th>
+        <th>Avg. Interest Rate</th>
+        <tr>
+      </thead>
+      <tbody>
+        {{range $i, $elem := .Savings}}
+        <tr>
+          <td><input type="text" name="savings[{{$i}}].name" value={{$elem.Name}} /></td>
+          <td><input type="text" name="savings[{{$i}}].amount" value={{$elem.Amount}} /></td>
+          <td><input type="text" name="savings[{{$i}}].intrest" value={{$elem.Interest}} /></td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+    <button action="/simulation/savings/" class="submit" type="submit">Update Savings</button>
+  </form>
+  <div class="results">
+    <p>You got <b>{{(index .Savings 0).Amount}}</b> in savings, wow</p>
+</section>
+{{end}}

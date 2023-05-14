@@ -47,6 +47,8 @@ func (c Calculator) AnnualSaveRate(income *money.Money, expenses *money.Money) (
 	return savings, nil
 }
 
+// AnnualSaveRatePercentage caclulates the percentages of money saved annually based on income and
+// expenses. It uses AnnualSaveRate to calculate the savings.
 func (c Calculator) AnnualSaveRatePercentage(income *money.Money, expenses *money.Money) (float64, error) {
 	savings, err := c.AnnualSaveRate(income, expenses)
 	if err != nil {
